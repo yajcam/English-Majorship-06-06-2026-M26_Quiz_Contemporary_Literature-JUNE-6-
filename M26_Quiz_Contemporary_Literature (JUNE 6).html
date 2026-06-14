@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>M26 Quiz – Contemporary, Popular, and Emergent Literature</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%);
+      color: #fff;
+      text-align: center;
+      padding: 36px 24px 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+    header .subtitle {
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: 6px;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    header .score-bar {
+      margin-top: 18px;
+      display: inline-flex;
+      gap: 24px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 40px;
+      padding: 8px 28px;
+      font-size: 0.95rem;
+    }
+    header .score-bar span { font-weight: 600; }
+    header .score-bar .lbl { font-weight: 400; opacity: 0.75; }
+
+    .quiz-container {
+      max-width: 780px;
+      margin: 36px auto 0;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(30,58,95,0.08);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 4px 16px rgba(30,58,95,0.13); }
+
+    .card-header {
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .q-num {
+      background: #1e3a5f;
+      color: #fff;
+      border-radius: 8px;
+      min-width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .q-text {
+      font-size: 0.97rem;
+      line-height: 1.55;
+      font-weight: 500;
+    }
+
+    .options {
+      padding: 14px 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 9px;
+      border: 1.5px solid #e2e8f0;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      font-size: 0.93rem;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .option:hover:not(.locked) {
+      border-color: #93c5fd;
+      background: #eff6ff;
+      transform: translateX(3px);
+    }
+    .option .badge {
+      min-width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #e2e8f0;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .option-text { line-height: 1.45; }
+
+    /* States */
+    .option.correct {
+      border-color: #22c55e;
+      background: #f0fdf4;
+    }
+    .option.correct .badge {
+      background: #22c55e;
+      color: #fff;
+    }
+    .option.incorrect {
+      border-color: #ef4444;
+      background: #fef2f2;
+    }
+    .option.incorrect .badge {
+      background: #ef4444;
+      color: #fff;
+    }
+    .option.reveal-correct {
+      border-color: #86efac;
+      background: #f0fdf4;
+      opacity: 0.7;
+    }
+    .option.reveal-correct .badge {
+      background: #86efac;
+      color: #166534;
+    }
+    .option.locked { cursor: default; }
+
+    .explanation {
+      display: none;
+      margin: 2px 20px 16px;
+      padding: 12px 14px;
+      background: #f0f9ff;
+      border-left: 4px solid #38bdf8;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.88rem;
+      color: #0c4a6e;
+      line-height: 1.55;
+    }
+    .explanation.show { display: block; }
+    .explanation strong { color: #1e3a5f; }
+
+    /* Hint label */
+    .hint {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      margin-top: -8px;
+      margin-bottom: 4px;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="subtitle">M26 Quiz</div>
+  <h1>Contemporary, Popular &amp; Emergent Literature</h1>
+  <div class="score-bar">
+    <div><span class="lbl">Score: </span><span id="scoreDisplay">0</span> / <span id="totalDisplay">40</span></div>
+    <div><span class="lbl">Answered: </span><span id="answeredDisplay">0</span></div>
+  </div>
+</header>
+
+<div class="quiz-container">
+  <p class="hint">💡 Double-click an option to submit your answer</p>
+  <div id="quizBody"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Mrs. Dalisay asks her class to analyze a novel where characters jump back and forth in time without explanation. Which literary period is this typical of?",
+    options: ["Victorian","Classical","Medieval","Postmodern"],
+    answer: 3,
+    explanation: "Postmodern literature often features non-linear timelines and fragmented narratives where time shifts without clear explanation, disrupting conventional story structure."
+  },
+  {
+    q: "Which author wrote The Hunger Games?",
+    options: ["EL James","JK Rowling","Neil Gaiman","Suzanne Collins"],
+    answer: 3,
+    explanation: "Suzanne Collins wrote The Hunger Games trilogy. EL James wrote Fifty Shades of Grey, JK Rowling wrote Harry Potter, and Neil Gaiman is known for works like American Gods."
+  },
+  {
+    q: "Which refers to combining styles and genres?",
+    options: ["Parody","Pastiche","Metonymy","Denouement"],
+    answer: 1,
+    explanation: "Pastiche is a literary technique that combines and imitates elements from multiple styles, genres, or works to create something new, often as a homage rather than mockery."
+  },
+  {
+    q: "Teacher Bea discusses a novel that uses song lyrics, news clippings, and diary entries as part of its structure. This is an example of",
+    options: ["Unity","Realism","Minimalism","Fragmentation"],
+    answer: 3,
+    explanation: "Fragmentation in literature refers to the use of disjointed, mixed-format elements — such as song lyrics, clippings, and diary entries — rather than a unified, linear narrative."
+  },
+  {
+    q: "Teacher Cole asks students to analyze how ABBA songs shape the narrative structure of Mamma Mia!",
+    options: ["Playfulness","Minimalism","Convergence","Stream of consciousness"],
+    answer: 2,
+    explanation: "Convergence refers to the blending of different media or cultural forms — in this case, how popular music (ABBA songs) converges with theatrical narrative to shape the story of Mamma Mia!"
+  },
+  {
+    q: "In The Road, the father and son travel through a bleak, post-apocalyptic world where details are sparse. Which characteristic best describes the novel's style?",
+    options: ["Magical Realism","Maximalism","Classical Realism","Minimalism"],
+    answer: 3,
+    explanation: "Minimalism is characterized by sparse prose, stripped-down details, and an economy of language. Cormac McCarthy's The Road is a prime example, with its stark, bare narrative style."
+  },
+  {
+    q: "Sir Brandon introduces a dystopian YA novel where a teenager must survive an oppressive government. What category does this fall under?",
+    options: ["Popular literature","Medieval literature","Romantic literature","Epic poetry"],
+    answer: 0,
+    explanation: "Dystopian YA novels like The Hunger Games fall under Popular Literature — works widely consumed by the public, often mass-marketed and commercially successful."
+  },
+  {
+    q: "In her film literacy class, Teacher Anne explains how a movie blends references from Westerns, musicals, and gangster films. What strategy is shown?",
+    options: ["Pastiche","Parody","Minimalism","Stream of consciousness"],
+    answer: 0,
+    explanation: "Pastiche involves blending and imitating multiple genres or styles. Mixing Westerns, musicals, and gangster films is a clear example of pastiche as a creative strategy."
+  },
+  {
+    q: "Digital Fiction : Interactivity :: Chick Lit : _______",
+    options: ["Blank verse","Circular narrative","Philosophical absurdism","Heroine-centered narrative"],
+    answer: 3,
+    explanation: "Just as Digital Fiction is defined by interactivity, Chick Lit is defined by its heroine-centered narrative — stories featuring female protagonists navigating romance, identity, and modern life."
+  },
+  {
+    q: "Which narrative technique features multiple references to other works?",
+    options: ["Parable","Denotation","Intertextuality","Symbolism"],
+    answer: 2,
+    explanation: "Intertextuality is the technique of referencing, quoting, or alluding to other texts within a work. It creates layers of meaning by connecting the text to other literary or cultural works."
+  },
+  {
+    q: "In Never Let Me Go, Kathy narrates her life with fragmented memories and emotional ambiguity, making the reader question what is real.",
+    options: ["Linear clarity","Historical realism","Unreliable narration","Folk epic structure"],
+    answer: 2,
+    explanation: "Unreliable narration occurs when the narrator's account is questionable due to limited knowledge, bias, or emotional distortion — as seen in Kazuo Ishiguro's Never Let Me Go."
+  },
+  {
+    q: "In White Teeth, multiple families and generations are explored through intertwined stories filled with cultural histories and vivid descriptions. Which trait does this represent?",
+    options: ["Maximalism","Minimalism","Classical epic","Gothic horror"],
+    answer: 0,
+    explanation: "Maximalism is characterized by abundance — multiple storylines, rich detail, and sprawling narratives. Zadie Smith's White Teeth embodies this with its layered, multi-generational storytelling."
+  },
+  {
+    q: "Teacher Paolo explains that a character feels disconnected from society due to rapid industrial changes. This belongs to which literary period?",
+    options: ["Romantic","Modern","Classical","Postmodern"],
+    answer: 1,
+    explanation: "Modern literature (Modernism) emerged in response to industrialization and urbanization, and often explores themes of alienation, identity crisis, and the individual's disconnection from society."
+  },
+  {
+    q: "How do the narratives of authors like Toni Morrison and Kazuo Ishiguro reflect contemporary social and political viewpoints?",
+    options: [
+      "They focus solely on personal and individual experiences.",
+      "They gear towards addressing social issues in their countries.",
+      "They often explore themes like the impact of history and identity.",
+      "They present straightforward and local conflicts pertinent to their lives."
+    ],
+    answer: 2,
+    explanation: "Both Toni Morrison and Kazuo Ishiguro weave themes of history, memory, race, and identity into their narratives, reflecting how the past shapes individual and collective identity."
+  },
+  {
+    q: "Maximalism : Excess :: Minimalism : _______",
+    options: ["Multilinear","Restraint","Illusion","Collage"],
+    answer: 1,
+    explanation: "Maximalism is associated with excess and abundance, while Minimalism is associated with restraint — using only what is necessary and stripping away the superfluous."
+  },
+  {
+    q: "How did the works of authors like J.R.R. Tolkien influence the fantasy genre in children's literature?",
+    options: [
+      "They established a model for creating immersive worlds.",
+      "They made the fantasy genre more available and emulatable.",
+      "They focused solely on realistic settings and avoided fantastical elements.",
+      "They simplified fantasy narratives to make them more accessible for young readers."
+    ],
+    answer: 0,
+    explanation: "Tolkien's detailed world-building in Middle-earth established a blueprint for immersive secondary worlds, influencing countless fantasy authors to create richly realized fictional universes."
+  },
+  {
+    q: "Pulp Fiction : Pastiche :: Catch-22 : _______",
+    options: ["Hypertext","Dark humor","Minimalism","Gothic elements"],
+    answer: 1,
+    explanation: "Just as Pulp Fiction is defined by pastiche, Joseph Heller's Catch-22 is defined by dark humor — using satire and absurdity to critique war and bureaucracy."
+  },
+  {
+    q: "Mr. Sebastian lets students interact with a digital story where images, sound, and animations are integrated into the reading experience.",
+    options: ["Minimalism","Flash fiction","Digital fiction","Pastiche"],
+    answer: 2,
+    explanation: "Digital fiction is a form of emergent literature that integrates multimedia elements — images, sound, animation — into a narrative experience, often requiring reader interaction."
+  },
+  {
+    q: "How did the American colonial period shape the trajectory of Philippine literature, particularly with the introduction of English?",
+    options: [
+      "It led to imitations of American and British models before Filipino writers found their unique voice.",
+      "It caused an immediate and seamless transition to English literary styles.",
+      "It resulted in the complete abandonment of Filipino languages in literature.",
+      "It had no impact on the development of Filipino literary styles."
+    ],
+    answer: 0,
+    explanation: "The American colonial period introduced English as the medium of instruction, initially leading Filipino writers to imitate Western models before gradually developing a distinct Filipino literary identity."
+  },
+  {
+    q: "Sir Jethro asks students to analyze why a postmodern text uses humor to tackle serious themes.",
+    options: ["Sublime","Dark humor","Verisimilitude","Symbolic irony"],
+    answer: 1,
+    explanation: "Dark humor is a key characteristic of postmodern literature, using comedy, absurdity, and wit to address serious, often disturbing themes — questioning meaning and challenging social norms."
+  },
+  {
+    q: "Ms. Tiamson lets students play a web-based narrative where clicking choices changes the storyline. What type of emergent literature is used?",
+    options: ["Flash fiction","Digital fiction","Manga","Chick lit"],
+    answer: 1,
+    explanation: "Digital fiction is interactive literature delivered through digital platforms. When reader choices alter the narrative, this is a defining feature of digital or hypertext fiction."
+  },
+  {
+    q: "Manga : Panels :: Flash Fiction : _______",
+    options: ["Brevity","Interactivity","Hypermedia","Historical setting"],
+    answer: 0,
+    explanation: "Just as Manga is defined by its use of panels (visual frames), Flash Fiction is defined by brevity — extremely short narratives that tell a complete story in very few words."
+  },
+  {
+    q: "Contemporary literature is written",
+    options: ["Before World War II","Only in the 19th century","Exclusively in traditional forms","After World War II through the current day"],
+    answer: 3,
+    explanation: "Contemporary literature refers to works written from the end of World War II to the present day, encompassing a wide range of modern styles and themes."
+  },
+  {
+    q: "Emergent literature includes writing forms that ______.",
+    options: [
+      "appeal to the masses and may shift in importance",
+      "exist in the present and post-modern society",
+      "are new or novel and integrate technology",
+      "adhere strictly to traditional forms"
+    ],
+    answer: 2,
+    explanation: "Emergent literature refers to new and innovative literary forms — often integrating technology, digital platforms, and interactive elements that go beyond traditional print-based writing."
+  },
+  {
+    q: "Mr. Castro shows his class a comic book featuring exaggerated facial expressions and stylized fight scenes typical of Japanese artistry.",
+    options: ["Flash fiction","Digital fiction","Manga","Graphic novel"],
+    answer: 2,
+    explanation: "Manga refers specifically to Japanese comic books/graphic novels, characterized by stylized art, expressive characters, and distinct visual storytelling conventions."
+  },
+  {
+    q: "Ms. Galvez gives her class a book narrated by a child whose innocence makes events confusing.",
+    options: ["Unreliable narrator","Maximalism","Concretism","Faction"],
+    answer: 0,
+    explanation: "An unreliable narrator is one whose account may be questioned due to limited understanding, bias, or innocence — a child narrator who misinterprets events is a classic example."
+  },
+  {
+    q: "Which novel is an example of Magical Realism?",
+    options: ["Twilight","One Hundred Years of Solitude","Pride and Prejudice","The Road"],
+    answer: 1,
+    explanation: "One Hundred Years of Solitude by Gabriel García Márquez is the defining example of Magical Realism — a genre where magical elements are presented as normal within a realistic setting."
+  },
+  {
+    q: "Modernism : Alienation :: Postmodernism : _______",
+    options: ["Fragmentation","Sentimentality","Didacticism","Realism"],
+    answer: 0,
+    explanation: "Modernism is associated with alienation and the isolated individual, while Postmodernism is associated with fragmentation — of narrative, identity, and meaning itself."
+  },
+  {
+    q: "In what way did the arrival of Americans influence the development of Philippine literature during its early years?",
+    options: [
+      "It led to a complete rejection of Filipino themes and styles.",
+      "It preserved and strengthened traditional Filipino oral literature.",
+      "It had no significant impact on the evolution of Philippine literature.",
+      "It introduced English in instruction and initially led to a period of imitation."
+    ],
+    answer: 3,
+    explanation: "The American period introduced English as the medium of instruction, which initially led Filipino writers to imitate American and British literary styles before finding an authentic Filipino literary voice."
+  },
+  {
+    q: "Ms. Rivera lets students analyze a novel that ends abruptly without resolving conflicts. Which trait is shown?",
+    options: ["Unity","Sublimity","Cliffhanger","Linear closure"],
+    answer: 2,
+    explanation: "A cliffhanger is a narrative device where the story ends without resolving a conflict, leaving the audience in suspense — common in serialized fiction and some postmodern novels."
+  },
+  {
+    q: "What is the term for the short stories featuring animals and inanimate objects that personify human traits?",
+    options: ["Stories from the Bible","Gods and goddesses","National epics","Aesop's fables"],
+    answer: 3,
+    explanation: "Aesop's Fables are short stories using animals and objects with human traits (personification) to convey moral lessons. They are among the oldest and most recognized forms of didactic literature."
+  },
+  {
+    q: "Digital fiction is a form of emergent literature. How does it differ from traditional forms of literature?",
+    options: [
+      "It is read in print form.",
+      "It limits itself to short stories.",
+      "It involves reader interaction.",
+      "It excludes the use of technology."
+    ],
+    answer: 2,
+    explanation: "Digital fiction differs from traditional literature by incorporating reader interaction — choices, hyperlinks, multimedia — making the reader an active participant in shaping the narrative."
+  },
+  {
+    q: "Mr. Gomez discusses a story in which a woman casually converses with a ghost as if it were normal. What technique is present?",
+    options: ["Magical realism","Symbolism","Allegory","Hypertext"],
+    answer: 0,
+    explanation: "Magical Realism presents supernatural or fantastical elements as ordinary occurrences within a realistic world — a character conversing casually with a ghost is a hallmark example."
+  },
+  {
+    q: "What distinguishes popular literature from other forms of literature in terms of its appeal and longevity?",
+    options: [
+      "Popular literature is characterized by its complex and challenging themes.",
+      "Popular literature always maintains its appeal and significance across generations.",
+      "Popular literature is primarily focused on achieving a high degree of formal beauty and subtlety.",
+      "Popular literature is liked by many people but may lose its appeal and significance over time."
+    ],
+    answer: 3,
+    explanation: "Popular literature is broadly appealing and commercially successful, but unlike canonical literary works, it may lose relevance over time as trends and tastes change."
+  },
+  {
+    q: "Which statements describe Contemporary Literature?\nI. Written after World War II.\nII. Often reflects social and political issues.\nIII. Uses linear chronological plots.\nIV. Includes postmodern techniques.",
+    options: ["I and III","I, II, and IV","I, III, and IV","II, III, and IV"],
+    answer: 1,
+    explanation: "Contemporary Literature (I) is written after WWII, (II) reflects social/political issues, and (IV) employs postmodern techniques. Statement III is incorrect — contemporary literature often uses non-linear plots."
+  },
+  {
+    q: "Which of the following is an example of emergent literature?",
+    options: ["Harry Potter","Digital Fiction","The Hunger Games","Fifty Shades of Grey"],
+    answer: 1,
+    explanation: "Digital Fiction is emergent literature — a new form that uses technology and interactivity. Harry Potter, The Hunger Games, and Fifty Shades of Grey are popular literature, not emergent forms."
+  },
+  {
+    q: "Which genre imagines futuristic or scientific possibilities?",
+    options: ["Science fiction","Pastoral literature","Epistolary fiction","Romanticism"],
+    answer: 0,
+    explanation: "Science Fiction explores futuristic scenarios, advanced technology, space travel, and scientific possibilities. It uses speculative premises to examine the human condition."
+  },
+  {
+    q: "Ms. Buenaventura asks her class to read a short story consisting of only 150 words. What form is this?",
+    options: ["Flash Fiction","Prose poetry","Doodle Fiction","Autobiography"],
+    answer: 0,
+    explanation: "Flash Fiction refers to extremely short stories — typically under 1,000 words, and sometimes as few as 100 words — that still convey a complete narrative arc."
+  },
+  {
+    q: "Which describe Modern Literature?\nI. Emphasis on experimentation.\nII. Use of stream of consciousness.\nIII. Reliance on stable, objective reality.\nIV. Themes of individual alienation.",
+    options: ["I, II, and III","I, II, and IV","III and IV","II and III"],
+    answer: 1,
+    explanation: "Modern Literature (I) emphasizes experimentation, (II) uses stream of consciousness, and (IV) explores individual alienation. Statement III is incorrect — Modernism rejects stable, objective reality."
+  },
+  {
+    q: "Which is a characteristic of Postmodernism?",
+    options: ["Metafiction","Analytic unity","Moral didacticism","Absolute realism"],
+    answer: 0,
+    explanation: "Metafiction — fiction that self-consciously draws attention to its own fictional nature — is a hallmark of Postmodernism. It challenges the boundary between fiction and reality."
+  }
+];
+
+const letters = ['A','B','C','D'];
+let score = 0;
+let answered = 0;
+
+function playSound(correct) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (correct) {
+    // Pleasant ascending chime
+    [523, 659, 784].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+      g.gain.linearRampToValueAtTime(0.22, ctx.currentTime + i * 0.12 + 0.04);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.12 + 0.25);
+      o.start(ctx.currentTime + i * 0.12);
+      o.stop(ctx.currentTime + i * 0.12 + 0.3);
+    });
+  } else {
+    // Low descending tone
+    [330, 277].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.14);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.14 + 0.22);
+      o.start(ctx.currentTime + i * 0.14);
+      o.stop(ctx.currentTime + i * 0.14 + 0.25);
+    });
+  }
+}
+
+function updateScore() {
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('answeredDisplay').textContent = answered;
+}
+
+function buildQuiz() {
+  const container = document.getElementById('quizBody');
+  questions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${qi}`;
+
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    header.innerHTML = `<div class="q-num">${qi + 1}</div><div class="q-text">${q.q.replace(/\n/g,'<br>')}</div>`;
+    card.appendChild(header);
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement('div');
+      btn.className = 'option';
+      btn.setAttribute('role','button');
+      btn.setAttribute('tabindex','0');
+      btn.dataset.qi = qi;
+      btn.dataset.oi = oi;
+      btn.innerHTML = `<div class="badge">${letters[oi]}</div><div class="option-text">${opt}</div>`;
+
+      btn.addEventListener('dblclick', () => handleAnswer(qi, oi));
+      btn.addEventListener('keydown', e => { if (e.key === 'Enter') handleAnswer(qi, oi); });
+      opts.appendChild(btn);
+    });
+
+    card.appendChild(opts);
+
+    const exp = document.createElement('div');
+    exp.className = 'explanation';
+    exp.id = `exp-${qi}`;
+    exp.innerHTML = `<strong>✅ Correct Answer: ${letters[q.answer]}. ${q.options[q.answer]}</strong><br>${q.explanation}`;
+    card.appendChild(exp);
+
+    container.appendChild(card);
+  });
+}
+
+function handleAnswer(qi, oi) {
+  const card = document.getElementById(`card-${qi}`);
+  if (card.dataset.answered) return; // already answered
+  card.dataset.answered = '1';
+  answered++;
+
+  const allOpts = card.querySelectorAll('.option');
+  const correct = questions[qi].answer;
+  const isCorrect = oi === correct;
+
+  if (isCorrect) score++;
+  playSound(isCorrect);
+
+  allOpts.forEach((btn, idx) => {
+    btn.classList.add('locked');
+    if (idx === oi && isCorrect) {
+      btn.classList.add('correct');
+    } else if (idx === oi && !isCorrect) {
+      btn.classList.add('incorrect');
+    } else if (idx === correct) {
+      btn.classList.add('reveal-correct');
+    }
+  });
+
+  document.getElementById(`exp-${qi}`).classList.add('show');
+  updateScore();
+
+  // Scroll explanation into view smoothly
+  setTimeout(() => {
+    document.getElementById(`exp-${qi}`).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 120);
+}
+
+buildQuiz();
+updateScore();
+</script>
+</body>
+</html>
